@@ -1,0 +1,83 @@
+# Get the files which should be moved, without folders
+$filepath = Read-Host "Input the file path: "
+$files = Get-ChildItem $filepath -Recurse -File
+#$files = Get-ChildItem $filepath -Recurse | where {!$_.PsIsContainer}
+
+# List Files which will be moved
+$files
+
+# Target Folder where files should be moved to. The script will automatically create a folder for the year and month.
+$targetPath = Read-Host "Input the root folder where you plan to save: "
+
+
+$TestFileInfo = (Get-ChildItem -LiteralPath $env:TEMP -File)[0]
+$TFI_LastWriteTime = $GCI_TestFileName.LastWriteTime
+
+$Year_TFI_LWT = $TFI_LastWriteTime.Year
+$Month_TFI_LWT = '{0:00}' -f $TFI_LastWriteTime.Month
+
+$TFI_LastWriteTime
+$Year_TFI_LWT
+$Month_TFI_LWT
+
+
+# Get year and Month of the file
+# I used LastWriteTime since this are synced files and the creation day will be the date when it was synced
+# $String1 = $file.Name.tostring()
+# $year = $string1.Substring(3,4)
+# $month = $string1.Substring(7,2)
+
+foreach ($file in $files) {
+    # Extract the date string
+    $datestring = $file.Split('_') | select -First 1 -Skip 1
+
+    # Reformat the date to a proper date/time
+    $date = [datetime]"$($datestring.Substring(4,2)),$($datestring.Substring(6,2)),$($datestring.Substring(0,4))"
+
+    # Set the folder name
+    $foldername = "$($date.Year)_$("{0:D2}" -f $date.Month) $("{0:MMMM}" -f $date)"
+
+    # Create the target directory if it doesn't exist
+    $Directory = $targetPath, $date.Year, $foldername -join '\'
+    if (!(Test-Path $Directory)) {New-Item $directory -type directory}
+
+    $file | Move-Item -Destination $Directory
+}
+
+# foreach ($file in $files)
+# {
+
+# switch($month){
+# "01" { $foldername = $year + "_01 January"}
+# "02" { $foldername = $year + "_02 February"}
+# "03" { $foldername = $year + "_03 March"}
+# "04" { $foldername = $year + "_04 April"}
+# "05" { $foldername = $year + "_05 May"}
+# "06" { $foldername = $year + "_06 June"}
+# "07" { $foldername = $year + "_07 July"}
+# "08" { $foldername = $year + "_08 August"}
+# "09" { $foldername = $year + "_09 September"}
+# "10" { $foldername = $year + "_10 October"}
+# "11" { $foldername = $year + "_11 November"}
+# "12" { $foldername = $year + "_12 December"}
+# default {write-host "ERROR"}
+# }
+
+# Out FileName, year and month
+# $file.Name
+# $year
+# $month
+
+# # Set Directory Path
+# $Directory = $targetPath + "\" + $year + "\" + $foldername
+# Write-Host "Attempting to save files in $Directory in $foldername"
+#
+# # Create directory if it doesn't exsist
+# if (!(Test-Path $Directory))
+# {
+# New-Item $directory -type directory
+# }
+#
+# # Move File to new location
+# $file | Move-Item -Destination $Directory
+# }
