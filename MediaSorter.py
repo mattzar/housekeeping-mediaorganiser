@@ -121,9 +121,10 @@ class MediaSorter():
 
     def process_job(self, job):
 
+        os.makedirs(os.path.dirname(job['log'].parent), exist_ok=True)
+
         logging.basicConfig(
             filename=job['log'],
-            mode='a',
             encoding='utf-8',
             level=logging.DEBUG,
             format='%(asctime)s %(message)s',
