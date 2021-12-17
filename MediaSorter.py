@@ -126,7 +126,7 @@ class MediaSorter():
         logging.basicConfig(
             filename=job['log'],
             encoding='utf-8',
-            level=logging.DEBUG,
+            level=logging.INFO,
             format='%(asctime)s %(message)s',
             datefmt='%m/%d/%Y %I:%M:%S %p'
         )
