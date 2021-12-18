@@ -76,6 +76,8 @@ class MediaSorter():
     
     def prepare_job(self, params):
 
+        logging.INFO("Starting job")
+
         job = {}
         job["input"] = Path(params.input or Path.home()/defaults["input"])
         job["output"] = Path(params.output or Path.home()/defaults["output"])
@@ -174,6 +176,8 @@ class MediaSorter():
                 queue.insert(0, image)
                 self.log_output(job, image, 'is currently not available, sending to back of queue and continuing')
 
+        logging.INFO("Finished job")
+
     def log_output(self, job, obj, message):
 
         now = round_to_secs(datetime.now())
@@ -186,7 +190,6 @@ class MediaSorter():
             print(f'{now} {obj} : {message}')
 
 def main():
-
     pass
 
 if __name__ == '__main__':
