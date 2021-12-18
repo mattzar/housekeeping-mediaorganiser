@@ -175,12 +175,14 @@ class MediaSorter():
                 self.log_output(job, image, 'is currently not available, sending to back of queue and continuing')
 
     def log_output(self, job, obj, message):
+
         now = round_to_secs(datetime.now())
-        with open(job['output']/job['log'], "a") as f:
-            f.write(f'{now} {obj} : {message}\n')
-        obj = colored(obj, 'white')
-        message = colored(message, 'green')
+
+        logging.info(f'{now} {obj} : {message}')
+
         if job['verbose']:
+            obj = colored(obj, 'white')
+            message = colored(message, 'green')
             print(f'{now} {obj} : {message}')
 
 def main():
