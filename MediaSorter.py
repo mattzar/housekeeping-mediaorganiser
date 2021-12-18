@@ -76,7 +76,7 @@ class MediaSorter():
     
     def prepare_job(self, params):
 
-        logging.INFO("Starting job")
+        logging.info("Starting job")
 
         job = {}
         job["input"] = Path(params.input or Path.home()/defaults["input"])
@@ -176,7 +176,7 @@ class MediaSorter():
                 queue.insert(0, image)
                 self.log_output(job, image, 'is currently not available, sending to back of queue and continuing')
 
-        logging.INFO("Finished job")
+        logging.info("Finished job")
 
     def log_output(self, job, obj, message):
 
