@@ -3,6 +3,6 @@ defaults = {
     'output': r"temp/out",
     'extensions': ('JPG', 'jpg', 'png', 'mp4', '3gp'),
     'exclusions': ('WA',),
-    'log': r"temp/log.log",
+    'log': r"temp/media-worker.log",
     'verbose': False,
 }

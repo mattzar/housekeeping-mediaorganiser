@@ -76,8 +76,6 @@ class MediaSorter():
     
     def prepare_job(self, params):
 
-        logging.info("Starting job")
-
         job = {}
         job["input"] = Path(params.input or Path.home()/defaults["input"])
         job["output"] = Path(params.output or Path.home()/defaults["output"])
@@ -132,6 +130,8 @@ class MediaSorter():
             format='%(asctime)s %(message)s',
             datefmt='%m/%d/%Y %I:%M:%S %p'
         )
+
+        logging.info("Starting job")
 
         queue = get_list_filepaths_in_dir(job['input'], job['extensions'])
 
