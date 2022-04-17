@@ -1,0 +1,11 @@
+defaults:
+    # "input": r"I:\Family\Sony RX100 IV\input"
+    input: D:\etc\media_sorter_test\in
+    # output: r"I:\Family\Sony RX100 IV\output"
+    output: D:\etc\media_sorter_test\out
+    extensions: ["JPG", "jpg", "png", "mp4", "3gp", "MP4"]
+    exclusions: ["WA",]
+    # log: r"I:\Family\Sony RX100 IV\output\media-worker.log"
+    log: D:\etc\media_sorter_test\media-worker.log
+    verbose: False
+    foldernames: location
