@@ -3,7 +3,6 @@ import os
 import re
 import platform
 from datetime import datetime, timedelta
-import logging
 
 def iterable(obj):
     try:
@@ -56,14 +55,4 @@ def list_filepaths_in_dir(directory, ext):
             if file.endswith(ext):
                 path = os.path.join(root, file)
                 filepaths.append(path)
-    print(f"{len(filepaths)} files added to queue")
     return filepaths
-
-def log_output(job, obj, message):
-
-    now = round_to_secs(datetime.now())
-
-    logging.info(f"{now} {obj} : {message}")
-
-    if job["verbose"]:
-        print(f"{now} {obj} : {message}")
