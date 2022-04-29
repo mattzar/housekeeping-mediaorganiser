@@ -50,8 +50,9 @@ def get_date_from_image_filename(filename, format):
             folder = "-".join(metadata["DateTime"].split(" ")[0].split(":")[:2])
             return folder, "using DateTime from metadata"
         except KeyError:
-            # otherwise determine creation date and use that instead
-            folder = datetime.fromtimestamp(
-                get_creation_date(filename), tz=timezone.utc
-            ).strftime(format)
-            return folder, "Using creation date to file"
+            logging.info("No datetime present in metadata")
+    else:
+        # otherwise determine creation date and use that instead
+        logging.info("Using file creation date as nothing better was detected")
+        folder = datetime.fromtimestamp(get_creation_date(filename)).astimezone().strftime(format)
+        return folder, "Using creation date to file"

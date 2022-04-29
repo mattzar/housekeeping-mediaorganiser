@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 from log_formatter import setup_logging
 import argparse
+import psutil
 
 import yaml
 import tools_utilities as util
@@ -21,12 +22,13 @@ class Job:
         with open('settings.yaml', 'r') as file:
             settings = yaml.safe_load(file)
 
-        self.input=Path(params.input or Path.home() / settings["defaults"]["input"])
-        self.output=Path(params.output or Path.home() / settings["defaults"]["output"])
-        self.log=Path(params.log or Path.home() / settings["defaults"]["log"])
-        self.verbose=params.verbose or settings["defaults"]["verbose"]
-        self.extensions=params.include or tuple(settings["defaults"]["extensions"])
-        self.foldernames=params.foldernames or settings["defaults"]["foldernames"]
+        self.input = Path(params.input or settings["defaults"]["input"])
+        self.output = Path(params.output or settings["defaults"]["output"])
+        self.log = Path(params.log or settings["defaults"]["log"])
+        self.verbose = params.verbose or settings["defaults"]["verbose"]
+        self.extensions = params.include or tuple(settings["defaults"]["extensions"])
+        self.foldernames = params.foldernames or settings["defaults"]["foldernames"]
+        self.method = settings["defaults"]["method"]
 
         try:
             self.exclusions = params.exclude.split(" ")
@@ -48,30 +50,33 @@ def arg_handler():
 
     return parser.parse_args()
 
-def process_job(job):
+def process_job(job):  # sourcery skip: avoid-builtin-shadow
 
     # os.makedirs(os.path.dirname(job["log"].parent), exist_ok=True)
 
         # Setup logging
     if (not setup_logging(console_log_output="stdout", console_log_level="debug", console_log_color=True,
                         logfile_file=job.log, logfile_log_level="debug", logfile_log_color=False,
-                        log_line_template="%(color_on)s[%(created)d] [%(threadName)s] [%(levelname)-8s] %(message)s%(color_off)s")):
+                        log_line_template="%(color_on)s[%(asctime)s] [%(threadName)s] [%(levelname)-8s] %(message)s%(color_off)s")):
         print("Failed to setup logging, aborting.")
         return 1
 
-    # logging.basicConfig(
-    #     filename=job["log"],
-    #     encoding="utf-8",
-    #     level=logging.DEBUG,
-    #     format="%(asctime)s %(message)s",
-    #     datefmt="%m/%d/%Y %I:%M:%S %p",
-    # )
-
     logging.info("Starting job")
 
-    input = util.list_filepaths_in_dir(job.input, job.extensions)
+    if job.input.name == 'removables':
+        logging.info(f"Searching for files of type {job.extensions} on removable drives")
+        input = []
+        # Find all removable partitions
+        removable_drives = [part for part in psutil.disk_partitions() if 'removable' in part.opts.split(',')]
+        for drive in removable_drives:
+            input += util.list_filepaths_in_dir(drive.mountpoint, job.extensions)
+    else:
+        input = util.list_filepaths_in_dir(job.input, job.extensions)
+    
+    # Exclude files that start with '.'
+    input = [el for el in input if not os.path.basename(el).startswith('.')]
     existing = [os.path.basename(elem) for elem in util.list_filepaths_in_dir(job.output, job.extensions)]
-    queue = [elem for elem in input if os.path.basename(elem) not in existing]
+    queue = [el for el in input if os.path.basename(el) not in existing]
 
     # remove any exluded files
     regex = [re.compile(ex) for ex in job.exclusions]
@@ -88,7 +93,7 @@ def process_job(job):
         image = queue.pop()
 
         if job.foldernames == "date":
-            folder, message = meta.get_date_from_image_filename(image, "%Y-%M")
+            folder, message = meta.get_date_from_image_filename(image, "%Y-%m")
         elif job.foldernames == "location":
             folder, message = locations[0]
 
@@ -97,11 +102,14 @@ def process_job(job):
         try:
             pathlib.Path(job.output / folder).mkdir(parents=True, exist_ok=True)
 
-            try:
-                shutil.move(image, job.output / folder)
+            if job.method == 'move':
+                try:
+                    shutil.move(image, job.output / folder)
+                except Error:
+                    logging.info(f"{image}: Cannot move file, copying instead")
+                    shutil.copy(image, job.output / folder)
 
-            except Error:
-                logging.info(f"{image}: Cannot move file, copying instead")
+            elif job.method == 'copy':
                 shutil.copy(image, job.output / folder)
 
         except PermissionError:
