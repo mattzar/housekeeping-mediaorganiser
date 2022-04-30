@@ -120,6 +120,8 @@ def arg_handler():
     parser.add_argument("-n", "--include", help="filetypes to include in sort")
     parser.add_argument("-x", "--exclude", help="wildcarded names to exclude")
     parser.add_argument("-f", "--foldernames", help="wildcarded names to exclude")
+    parser.add_argument("-m", "--method", help="select 'copy' or 'move' files")
+
 
     return parser.parse_args()
 
