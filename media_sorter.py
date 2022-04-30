@@ -1,10 +1,8 @@
 import os
 import pathlib
 import shutil
-from shutil import Error
 import re
 import logging
-from pathlib import Path
 import sys
 from log_formatter import setup_logging
 import argparse
@@ -15,17 +13,19 @@ import tools_utilities as util
 import tools_metadata as meta
 import media_geocoder as geo
 
-class MediaSorter:
 
+class MediaSorter:
     def __init__(self, params=None):
 
-        with open('settings.yaml', 'r') as file:
+        with open("settings.yaml", "r") as file:
             settings = yaml.safe_load(file)
 
-        self.input = Path(params.input or settings["defaults"]["input"])
-        self.output = Path(params.output or settings["defaults"]["output"])
-        self.log = Path(params.log or settings["defaults"]["output"] + settings["defaults"]["log"])
-        self.verbose = params.verbose or settings["defaults"]["verbose"]
+        self.input = pathlib.Path(params.input or settings["defaults"]["input"])
+        self.output = pathlib.Path(params.output or settings["defaults"]["output"])
+        self.log = pathlib.Path(
+            params.log or settings["defaults"]["output"] + settings["defaults"]["log"]
+        )
+        self.loglevel = params.loglevel or settings["defaults"]["loglevel"]
         self.extensions = params.include or tuple(settings["defaults"]["extensions"])
         self.foldernames = params.foldernames or settings["defaults"]["foldernames"]
         self.method = settings["defaults"]["method"]
@@ -37,83 +37,108 @@ class MediaSorter:
 
     def process_job(self):
 
-        job = self.job
-
-        os.makedirs(os.path.dirname(job["log"].parent), exist_ok=True)
+        # os.makedirs(os.path.dirname(self.output), exist_ok=True)
+        pathlib.Path(self.output).mkdir(parents=True, exist_ok=True)
 
         # Setup logging
-        if (not setup_logging(console_log_output="stdout", console_log_level="info", console_log_color=True,
-                            logfile_file=job.log, logfile_log_level="debug", logfile_log_color=False,
-                            log_line_template="%(color_on)s[%(asctime)s] [%(threadName)s] [%(levelname)-8s] %(message)s%(color_off)s")):
+        if not setup_logging(
+            console_log_output="stdout",
+            console_log_level="info",
+            console_log_color=True,
+            logfile_file=self.log,
+            logfile_log_level=self.loglevel,
+            logfile_log_color=False,
+            log_line_template="%(color_on)s[%(asctime)s] [%(threadName)s] [%(levelname)-8s] %(message)s%(color_off)s",
+        ):
             print("Failed to setup logging, aborting.")
             return 1
 
         logging.info("Starting job")
 
-        if job.input.name == 'removables':
-            logging.info(f"Searching for files of type {job.extensions} on removable drives")
+        if self.input.name == "removables":
+
             input_files = []
+            logging.info(
+                f"Searching for files of type {self.extensions} on removable drives"
+            )
+
             # Find all removable partitions
-            removable_drives = [part for part in psutil.disk_partitions() if 'removable' in part.opts.split(',')]
+            removable_drives = [
+                part
+                for part in psutil.disk_partitions()
+                if "removable" in part.opts.split(",")
+            ]
+            logging.info(f"{len(removable_drives)} removable drives found")
+
             for drive in removable_drives:
-                input_files += util.list_filepaths_in_dir(drive.mountpoint, job.extensions)
+                input_files += util.list_filepaths_in_dir(
+                    drive.mountpoint, self.extensions
+                )
         else:
-            input_files = util.list_filepaths_in_dir(job.input, job.extensions)
-        
+            input_files = util.list_filepaths_in_dir(self.input, self.extensions)
+
         # Exclude files that start with '.'
-        input_files = [el for el in input_files if not os.path.basename(el).startswith('.')]
-        existing = [os.path.basename(el) for el in util.list_filepaths_in_dir(job.output, job.extensions)]
-        queue = [el for el in input if os.path.basename(el) not in existing]
+        input_files = [
+            el for el in input_files if not os.path.basename(el).startswith(".")
+        ]
+        # Walk through input dir, return files of type in 'extensions'
+        existing = [
+            os.path.basename(el)
+            for el in util.list_filepaths_in_dir(self.output, self.extensions)
+        ]
+        # Form queue of files of type in 'extensions', which are in input but not already in output (avoids duplicates)
+        queue = [el for el in input_files if os.path.basename(el) not in existing]
 
         # remove any exluded files
-        regex = [re.compile(ex) for ex in job.exclusions]
+        regex = [re.compile(ex) for ex in self.exclusions]
         queue = [i for i in queue if not (any(ex.search(i) for ex in regex))]
 
-        logging.info(f"{len(input)} files found in input folder")
-        logging.info(f"{len(existing)} files found in output folder")
+        logging.info(f"{len(input_files)} files found in input folder: {self.input}")
+        logging.info(f"{len(existing)} files found in output folder: {self.output}")
         logging.info(f"{len(queue)} files added to job queue")
 
-        if job.foldernames == "location":
+        if self.foldernames == "location":
             locations = geo.aggregate_reverse_geocode(queue)
 
-
         while queue:
+
             image = queue.pop()
 
-            if job.foldernames == "date":
+            if self.foldernames == "date":
                 folder, message = meta.get_date_from_image_filename(image, "%Y-%m")
-            elif job.foldernames == "location":
+
+            elif self.foldernames == "location":
                 folder, message = locations[0]
 
             logging.info(message)
 
             try:
-                pathlib.Path(job.output / folder).mkdir(parents=True, exist_ok=True)
+                # pathlib.Path(self.output / folder).mkdir(parents=True, exist_ok=True)
 
-                if job.method == 'move':
-                    try:
-                        shutil.move(image, job.output / folder)
-                    except Error:
-                        logging.info(f"{image}: Cannot move file, copying instead")
-                        shutil.copy(image, job.output / folder)
+                if self.method == "move":
+                    shutil.move(image, self.output / folder)
+                    logging.info(f"{image} moved to {self.output / folder}")
 
-                elif job.method == 'copy':
-                    shutil.copy(image, job.output / folder)
-
-                logging.info(f"{image} moved to {job.output / folder}")
+                elif self.method == "copy":
+                    shutil.copy(image, self.output / folder)
+                    logging.info(f"{image} copied to {self.output / folder}")
 
             except PermissionError:
                 queue.insert(0, image)
-                logging.info("f{image} is currently not available, sending to back of queue and continuing")
+                logging.info(
+                    "f{image} is currently not available, sending to back of queue and continuing"
+                )
+
+            except shutil.Error:
+                logging.info(f"{image}: Cannot move file, copying instead")
+                shutil.copy(image, self.output / folder)
 
         logging.info("Finished job")
+
 
 def arg_handler():
 
     parser = argparse.ArgumentParser(description="A program to sort media")
-    parser.add_argument(
-        "-v", "--verbose", help="enable verbose mode", action="store_true"
-    )
     parser.add_argument("-i", "--input", help="path to source directory")
     parser.add_argument("-o", "--output", help="path to output directory")
     parser.add_argument("-l", "--log", help="path to log output file")
@@ -121,7 +146,12 @@ def arg_handler():
     parser.add_argument("-x", "--exclude", help="wildcarded names to exclude")
     parser.add_argument("-f", "--foldernames", help="wildcarded names to exclude")
     parser.add_argument("-m", "--method", help="select 'copy' or 'move' files")
-
+    parser.add_argument("-j", "--job", help="select a preset job")
+    parser.add_argument(
+        "-v",
+        "--loglevel",
+        help="select log level critical | error | warning | info | debug",
+    )
 
     return parser.parse_args()
 
