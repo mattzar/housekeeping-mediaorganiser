@@ -38,21 +38,20 @@ class Job:
 def arg_handler():
 
     parser = argparse.ArgumentParser(description="A program to sort media")
-    parser.add_argument(
-        "-v", "--verbose", help="enable verbose mode", action="store_true"
-    )
+    parser.add_argument("-v", "--verbose", help="enable verbose mode", action="store_true")
     parser.add_argument("-i", "--input", help="path to source directory")
     parser.add_argument("-o", "--output", help="path to output directory")
     parser.add_argument("-l", "--log", help="path to log output file")
     parser.add_argument("-n", "--include", help="filetypes to include in sort")
     parser.add_argument("-x", "--exclude", help="wildcarded names to exclude")
     parser.add_argument("-f", "--foldernames", help="wildcarded names to exclude")
+    parser.add_argument("-m", "--method", help="select 'copy' or 'move' files")
 
     return parser.parse_args()
 
-def process_job(job):  # sourcery skip: avoid-builtin-shadow
+def process_job(job):
 
-    # os.makedirs(os.path.dirname(job["log"].parent), exist_ok=True)
+    os.makedirs(os.path.dirname(job["log"].parent), exist_ok=True)
 
         # Setup logging
     if (not setup_logging(console_log_output="stdout", console_log_level="debug", console_log_color=True,

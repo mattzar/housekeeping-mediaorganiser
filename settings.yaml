@@ -1,16 +1,10 @@
 defaults:
-    # "input": r"I:\Family\Sony RX100 IV\input"
-    # input: D:\etc\media_sorter_test\in
-    # input: /Users/matthew/temp/in
     input: 'removables'
-    output: 'I:\Family\Sony RX100 IV'
-    # output: D:\etc\media_sorter_test\out
+    output: 'I:\Family\Sony RX100 IV\'
     # output: /Users/matthew/temp/out
     extensions: ["JPG", "jpg", "png", "mp4", "3gp", "MP4"]
     exclusions: ["WA",]
-    log: 'I:\Family\Sony RX100 IV\media-worker.log'
-    # log: /Users/matthew/temp/worker.log
+    log: media-worker.log
     verbose: False
-    foldernames: date
-    # foldernames: location
-    method: 'copy' # 'copy' | 'move'
+    foldernames: date # date | location
+    method: copy # copy | move
