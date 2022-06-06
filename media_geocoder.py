@@ -6,7 +6,6 @@ from GPSPhoto import gpsphoto
 import googlemaps
 import logging
 from collections import Counter
-import slugify
 import re
 
 def aggregate_reverse_geocode(images, keys=None):

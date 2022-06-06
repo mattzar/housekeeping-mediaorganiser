@@ -7,7 +7,8 @@
     "settings": {
         "workbench.colorCustomizations": {
             "titleBar.activeBackground": "#3f6e5c"
-          },
+        },
+        "python.defaultInterpreterPath" : "venv",
     },
     "launch": {
         "version": "0.2.0",

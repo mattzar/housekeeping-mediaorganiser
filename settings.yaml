@@ -1,25 +1,31 @@
 defaults:
-    input: /Users/matthew/temp/in
-    # input: 'removables'
-    # output: 'I:\Family\Sony RX100 IV\'
-    output: /Users/matthew/temp/out
-    extensions: ["JPG", "jpg", "png", "mp4", "3gp", "MP4"]
-    exclusions: ["WA",]
+    input: removables
+    output: I:\Family\Sony RX100 IV\
+    extensions: [JPG, jpg, png, mp4, 3gp, MP4]
+    exclusions: [WA,]
     log: media-worker.log
     loglevel: info
-    foldernames: location # date | location
+    foldernames: date # date | location
     method: copy # copy | move
 
 jobs:
     camera:
         input: removables
-        # output: 'I:\Family\Sony RX100 IV\'
-        output: /Users/matthew/temp/out
-        extensions: ["JPG", "jpg", "png", "mp4", "3gp", "MP4"]
-        exclusions: ["WA",]
+        output: I:\Family\Sony RX100 IV\
+        extensions: [JPG, jpg, png, mp4, 3gp, MP4]
+        exclusions: [WA,]
         log: media-worker.log
         foldernames: date # date | location
         method: copy # copy | move
+
+    cellphone:
+        input: D:\temp
+        output: I:\Matthew\photos\0 Cellphone
+        extensions: [JPG, jpg, png, mp4, 3gp, MP4]
+        exclusions: [WA,]
+        log: media-worker.log
+        foldernames: date # date | location
+        method: move # copy | move
 
 location:
     priority: [formatted_address, name]

@@ -1,18 +1,17 @@
-
 from PIL import Image, UnidentifiedImageError
 from PIL.ExifTags import TAGS
-from datetime import timezone
 import logging
 
 from tools_utilities import *
 
-def get_metadata_from_exif(filename):
+def get_metadata_from_exif(filename : str) -> dict:
 
     try:
         image = Image.open(filename)
         image.verify()
     except UnidentifiedImageError:
-        logging.error("Unidentified image error")
+        filename = os.path.split(filename)[0]
+        logging.info(f"{filename} was not recoginized as image")
         return 0
     except Exception:
         logging.error("File is broken")
@@ -36,7 +35,7 @@ def get_metadata_from_exif(filename):
 
     return metadata
 
-def get_date_from_image_filename(filename, format):
+def get_date_from_image_filename(filename : str, format : str) -> str:
 
     # first look for 8 digits in filename
     if filename_date := get_date_from_string(filename):
@@ -50,9 +49,9 @@ def get_date_from_image_filename(filename, format):
             folder = "-".join(metadata["DateTime"].split(" ")[0].split(":")[:2])
             return folder, "using DateTime from metadata"
         except KeyError:
-            logging.info("No datetime present in metadata")
+            logging.info(f"No datetime present in metadata {filename}")
     else:
         # otherwise determine creation date and use that instead
-        logging.info("Using file creation date as nothing better was detected")
+        logging.info(f"Using file creation date as nothing better was detected {filename}")
         folder = datetime.fromtimestamp(get_creation_date(filename)).astimezone().strftime(format)
         return folder, "Using creation date to file"

@@ -3,6 +3,7 @@ import os
 import re
 import platform
 from datetime import datetime, timedelta
+from typing import List
 
 def iterable(obj):
     try:
@@ -18,12 +19,12 @@ def round_to_secs(dt: datetime) -> datetime:
     return dt.replace(microsecond=0) + timedelta(seconds=extra_sec)
 
 
-def get_date_from_string(string):
+def get_date_from_string(string : str):
     # first look for 8 digits in string
     if dateString := re.compile(r"\b\d{8}\b").search(string):
         # Check if found date is valid, and if so return date_time object
-        date_time = datetime.strptime(dateString.group(0), "%Y%m%d")
-        if datetime(1900, 1, 1) <= date_time <= datetime.today():
+        date_time = datetime.strptime(dateString[0], "%Y%m%d")
+        if datetime(1900, 1, 1) <= date_time <= datetime.now():
             return date_time
     # otherwise return 0
     return 0
@@ -38,17 +39,16 @@ def get_creation_date(path_to_file):
     if platform.system() == "Windows":
         # return os.path.getctime(path_to_file)
         return os.stat(path_to_file).st_mtime
-    else:
-        stat = os.stat(path_to_file)
-        try:
-            return stat.st_birthtime
-        except AttributeError:
-            # We're probably on Linux. No easy way to get creation dates here,
-            # so we'll settle for when its content was last modified.
-            return stat.st_mtime
+    stat = os.stat(path_to_file)
+    try:
+        return stat.st_birthtime
+    except AttributeError:
+        # We're probably on Linux. No easy way to get creation dates here,
+        # so we'll settle for when its content was last modified.
+        return stat.st_mtime
 
 
-def list_filepaths_in_dir(directory, ext):
+def list_filepaths_in_dir(directory : str, ext : List[str]) -> List[str]:
     filepaths = []
     for root, dirs, files in os.walk(directory):
         for file in files:
