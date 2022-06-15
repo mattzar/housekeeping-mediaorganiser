@@ -1,8 +1,9 @@
 from PIL import Image, UnidentifiedImageError
 from PIL.ExifTags import TAGS
 import logging
-
-from tools_utilities import *
+from datetime import datetime
+import os
+from tools_utilities import get_date_from_string, get_creation_date, ValidDateNotFound
 
 def get_metadata_from_exif(filename : str) -> dict:
 
@@ -37,21 +38,23 @@ def get_metadata_from_exif(filename : str) -> dict:
 
 def get_date_from_image_filename(filename : str, format : str) -> str:
 
-    # first look for 8 digits in filename
-    if filename_date := get_date_from_string(filename):
-        folder = filename_date.strftime(format)
-        return folder, "valid date extracted from filename"
+    # First look for 8 digits in filename
+    try:
+        folder = get_date_from_string(filename).strftime(format)
+        logging.info(f"Valid date extracted from {filename}")
+        return folder
+    except ValidDateNotFound:
+        logging.info(f"Valid date not detected in {filename}")
+    
+    # If that doesnt work, look for metadata from exif
+    try:
+        folder = "-".join(get_metadata_from_exif(filename)["DateTime"].split(" ")[0].split(":")[:2])
+        logging.info(f"Using DateTime from metadata in {filename}")
+        return folder
+    except (KeyError, TypeError):
+        logging.info(f"No datetime present in metadata {filename}")
 
-    elif metadata := get_metadata_from_exif(filename):
-        # Then check for metadata present
-        try:
-            # if metadata present, look for 'DateTime' info
-            folder = "-".join(metadata["DateTime"].split(" ")[0].split(":")[:2])
-            return folder, "using DateTime from metadata"
-        except KeyError:
-            logging.info(f"No datetime present in metadata {filename}")
-    else:
-        # otherwise determine creation date and use that instead
-        logging.info(f"Using file creation date as nothing better was detected {filename}")
-        folder = datetime.fromtimestamp(get_creation_date(filename)).astimezone().strftime(format)
-        return folder, "Using creation date to file"
+    # If that doesn't work, then get the time from the file creation date as a last resort
+    folder = datetime.fromtimestamp(get_creation_date(filename)).astimezone().strftime(format)
+    logging.info(f"Using file creation date as nothing better was detected {filename}")
+    return folder

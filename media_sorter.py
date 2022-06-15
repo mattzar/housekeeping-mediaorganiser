@@ -1,44 +1,26 @@
+from __future__ import annotations
 import os
 import pathlib
 import shutil
 import re
 import logging
 import sys
-from typing import List
 from log_formatter import setup_logging
 import argparse
-import psutil
+
 
 import yaml
 import tools_utilities as util
 import tools_metadata as meta
 import media_geocoder as geo
 
-def find_files_on_removable_drives(extensions: List[str]) -> List[str]:
 
-    found_files = []
-    logging.info(
-        f"Searching for files of type {extensions} on removable drives"
-    )
-
-    # Find all removable partitions
-    removable_drives = [
-        part
-        for part in psutil.disk_partitions()
-        if "removable" in part.opts.split(",")
-    ]
-    logging.info(f"{len(removable_drives)} removable drives found")
-
-    for drive in removable_drives:
-        found_files += util.list_filepaths_in_dir(
-            drive.mountpoint, extensions
-        )
-    return found_files
 
 class MediaSorter:
-    def __init__(self, params = None):
+    def __init__(self, params=None):
 
-        with open("settings.yaml", "r") as file:
+        settings_path = pathlib.Path(os.getcwd(), "settings.yaml")
+        with open(settings_path, "r") as file:
             settings = yaml.safe_load(file)
 
         defaults = settings["defaults"] | settings["jobs"][params.job] if params.job else settings["defaults"]
@@ -79,7 +61,7 @@ class MediaSorter:
         # if input is set to removable drives, look for files of type self.extensions
         # otherwise look for files in the defined input directory
         if self.input.name == "removables":
-            input_files = find_files_on_removable_drives(self.extensions)
+            input_files = util.find_files_on_removable_drives(self.extensions)
         else:
             input_files = util.list_filepaths_in_dir(self.input, self.extensions)
 
@@ -104,19 +86,18 @@ class MediaSorter:
         logging.info(f"{len(queue)} files added to job queue")
 
         if self.foldernames == "location":
-            locations = geo.aggregate_reverse_geocode(queue)
+            with geo.GoogleMapsClient() as client:
+                locations = client.aggregate_reverse_geocode(queue)
 
         while queue:
 
             image = queue.pop()
 
             if self.foldernames == "date":
-                folder, message = meta.get_date_from_image_filename(image, "%Y-%m")
+                folder = meta.get_date_from_image_filename(image, "%Y-%m")
 
             elif self.foldernames == "location":
-                folder, message = locations[0]
-
-            logging.info(message)
+                folder = locations[0]
 
             try:
                 dest_path = os.path.join(self.output, folder, os.path.basename(image))

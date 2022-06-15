@@ -4,9 +4,9 @@ defaults:
     extensions: [JPG, jpg, png, mp4, 3gp, MP4]
     exclusions: [WA,]
     log: media-worker.log
-    loglevel: info
     foldernames: date # date | location
     method: copy # copy | move
+    loglevel: info
 
 jobs:
     camera:

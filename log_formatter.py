@@ -74,7 +74,7 @@ def setup_logging(console_log_output, console_log_level, console_log_color, logf
     # Set console log level
     try:
         console_handler.setLevel(console_log_level.upper()) # only accepts uppercase level names
-    except:
+    except Exception:
         print("Failed to set console log level: invalid level: '%s'" % console_log_level)
         return False
 
@@ -87,13 +87,12 @@ def setup_logging(console_log_output, console_log_level, console_log_color, logf
     try:
         logfile_handler = logging.FileHandler(logfile_file)
     except Exception as exception:
-        print("Failed to set up log file: %s" % str(exception))
+        print(f"Failed to set up log file: {str(exception)}")
         return False
-
     # Set log file log level
     try:
         logfile_handler.setLevel(logfile_log_level.upper()) # only accepts uppercase level names
-    except:
+    except Exception:
         print("Failed to set log file log level: invalid level: '%s'" % logfile_log_level)
         return False
 
@@ -110,9 +109,15 @@ def main():
 
     # Setup logging
     script_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
-    if (not setup_logging(console_log_output="stdout", console_log_level="warning", console_log_color=True,
-                        logfile_file=script_name + ".log", logfile_log_level="debug", logfile_log_color=False,
-                        log_line_template="%(color_on)s[%(created)d] [%(threadName)s] [%(levelname)-8s] %(message)s%(color_off)s")):
+    if not setup_logging(
+            console_log_output="stdout",
+            console_log_level="warning",
+            console_log_color=True,
+            logfile_file=f"{script_name}.log",
+            logfile_log_level="debug",
+            logfile_log_color=False,
+            log_line_template="%(color_on)s[%(created)d] [%(threadName)s] [%(levelname)-8s] %(message)s%(color_off)s"
+        ): 
         print("Failed to setup logging, aborting.")
         return 1
 
