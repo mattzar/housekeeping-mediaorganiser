@@ -3,7 +3,6 @@ import abc
 import pathlib
 from typing import overload
 from tools_metadata import get_date_from_image_filename
-# import os
 import shutil
 import logging
 from typing import overload

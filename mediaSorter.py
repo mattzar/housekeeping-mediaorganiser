@@ -13,7 +13,7 @@ import tools_utilities as util
 import tools_metadata as meta
 import media_geocoder as geo
 from FileSorter import ImageByDateSorter, ImageByLocationSorter
-
+from FileSearch import DirectorySearch, RemovableDriveSearch
 
 
 class MediaSorter:
@@ -39,8 +39,6 @@ class MediaSorter:
         except AttributeError:
             self.exclusions = defaults["exclusions"]
 
-    def process_job(self):
-
         pathlib.Path(self.output).mkdir(parents=True, exist_ok=True)
 
         # Setup logging
@@ -56,33 +54,32 @@ class MediaSorter:
             print("Failed to setup logging, aborting.")
             exit()
 
+    def process_job(self):
+
         logging.info("Starting job")
+
 
         # if input is set to removable drives, look for files of type self.extensions
         # otherwise look for files in the defined input directory
         if self.input.name == "removables":
-            input_files = util.find_files_on_removable_drives(self.extensions)
+            input_files = RemovableDriveSearch().find_files(
+                extensions=self.extensions,
+            ).exclude_files(self.exclusions)
         else:
-            input_files = util.list_filepaths_in_dir(self.input, self.extensions)
-
-        # Exclude files that start with '.'
-        input_files = [
-            el for el in input_files if not os.path.basename(el).startswith(".")
-        ]
-        # Walk through input dir, return files of type in 'extensions'
-        existing = [
-            os.path.basename(el)
-            for el in util.list_filepaths_in_dir(self.output, self.extensions)
-        ]
+            input_files = DirectorySearch().find_files(
+                extensions=self.extensions, 
+                directory=self.input
+            ).exclude_files(self.exclusions)
+        
+        existing_files = DirectorySearch().find_files(
+            extensions=self.extensions, 
+            directory=self.output
+        )
         # Form queue of files of type in 'extensions', which are in input but not already in output (avoids duplicates)
-        queue = [el for el in input_files if os.path.basename(el) not in existing]
-
-        # remove any exluded files
-        regex = [re.compile(ex) for ex in self.exclusions]
-        queue = [i for i in queue if not (any(ex.search(i) for ex in regex))]
+        queue = [file for file in input_files.filenames if file not in existing_files.filenames]
 
         logging.info(f"{len(input_files)} files found in input folder: {self.input}")
-        logging.info(f"{len(existing)} files found in output folder: {self.output}")
+        logging.info(f"{len(existing_files)} files found in output folder: {self.output}")
         logging.info(f"{len(queue)} files added to job queue")
 
         if self.foldernames == "location":
@@ -105,30 +102,6 @@ class MediaSorter:
                 destination=self.output,
                 method=self.method
             )
-
-            # try:
-            #     dest_path = os.path.join(self.output, folder, os.path.basename(image))
-            #     dest_dir, filename = os.path.split(dest_path)
-            #     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
-
-            #     if self.method == "move":
-            #         shutil.move(image, dest_path)
-            #         logging.info(f"{filename} moved to {os.path.basename(dest_dir)}")
-
-            #     elif self.method == "copy":
-            #         shutil.copy(image, dest_path)
-            #         logging.info(f"{filename} copied to {os.path.basename(dest_dir)}")
-
-            # except PermissionError:
-            #     queue.insert(0, image)
-            #     logging.info(
-            #         "f{filename} is currently not available, sending to back of queue and continuing"
-            #     )
-
-            # except shutil.Error:
-            #     logging.info(f"{filename}: Cannot move file, try copying instead")
-            #     shutil.copy(image, dest_path)
-            #     logging.info(f"{filename} copied to {os.path.basename(dest_dir)}")
 
         logging.info("Finished job")
 

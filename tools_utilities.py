@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import List
 import psutil
 import logging
+import pathlib
 
 class ValidDateNotFound(Exception):
     """A valid date cannot be extracted from the filename"""
@@ -69,11 +70,22 @@ def get_creation_date(path_to_file):
         # so we'll settle for when its content was last modified.
         return stat.st_mtime
 
-def list_filepaths_in_dir(directory : str, ext : List[str]) -> List[str]:
-    filepaths = []
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file.endswith(ext):
-                path = os.path.join(root, file)
-                filepaths.append(path)
-    return filepaths
+def walk(path): 
+    for p in pathlib.Path(path).iterdir(): 
+        if p.is_dir(): 
+            yield from walk(p)
+            continue
+        yield p.resolve()
+
+def list_filepaths_in_dir(directory : str | pathlib.Path, ext : List[str]) -> List[pathlib.Path]:
+    return [filepath for filepath in walk(directory) if filepath.suffix.casefold() in map(str.casefold, ext)]
+
+# def list_filepaths_in_dir(directory : str, ext : List[str]) -> List[str]:
+#     filepaths = []
+#     for root, dirs, files in os.walk(directory):
+#         for file in files:
+#             if file.endswith(ext):
+#                 path = os.path.join(root, file)
+#                 filepaths.append(path)
+#     return filepaths
+

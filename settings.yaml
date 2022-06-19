@@ -1,8 +1,10 @@
 defaults:
     input: removables
     output: I:\Family\Sony RX100 IV\
-    extensions: [JPG, jpg, png, mp4, 3gp, MP4]
-    exclusions: [WA,]
+    extensions: [.jpg, .png, .mp4, .3gp, .MP4]
+    exclusions:
+        - "^(?!.*WA).*$" # Exclude files containing 'WA' (whatsapp photos)
+        - "^[^.].*$" # Exclude files starting with '.'
     log: media-worker.log
     foldernames: date # date | location
     method: copy # copy | move
