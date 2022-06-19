@@ -40,7 +40,8 @@ class GoogleMapsClient:
     def __exit__(self, *args, **kwargs):
         del self
 
-    def locate_from_exif(self, image, method, **kwargs):
+    @staticmethod
+    def locate_from_exif(image, method, **kwargs):
         try:
             latlng = get_latlng_from_exif(image)
             logging.info("GPS location found in image metadata")
@@ -78,10 +79,10 @@ class GoogleMapsClient:
         c.most_common(1)
 
     def reverse_geocode_from_exif(self, image):
-        return self.locate_from_exif(image, self.client.reverse_geocode)
+        return GoogleMapsClient.locate_from_exif(image, self.client.reverse_geocode)
 
     def places_nearby_from_exif(self, image):
-        return self.locate_from_exif(image, self.client.places_nearby)
+        return GoogleMapsClient.locate_from_exif(image, self.client.places_nearby)
 
 
 def main():

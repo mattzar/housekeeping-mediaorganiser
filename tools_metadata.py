@@ -40,21 +40,21 @@ def get_date_from_image_filename(filename : str, format : str) -> str:
 
     # First look for 8 digits in filename
     try:
-        folder = get_date_from_string(filename).strftime(format)
+        date = get_date_from_string(filename).strftime(format)
         logging.info(f"Valid date extracted from {filename}")
-        return folder
+        return date
     except ValidDateNotFound:
         logging.info(f"Valid date not detected in {filename}")
     
     # If that doesnt work, look for metadata from exif
     try:
-        folder = "-".join(get_metadata_from_exif(filename)["DateTime"].split(" ")[0].split(":")[:2])
+        date = "-".join(get_metadata_from_exif(filename)["DateTime"].split(" ")[0].split(":")[:2])
         logging.info(f"Using DateTime from metadata in {filename}")
-        return folder
+        return date
     except (KeyError, TypeError):
         logging.info(f"No datetime present in metadata {filename}")
 
     # If that doesn't work, then get the time from the file creation date as a last resort
-    folder = datetime.fromtimestamp(get_creation_date(filename)).astimezone().strftime(format)
+    date = datetime.fromtimestamp(get_creation_date(filename)).astimezone().strftime(format)
     logging.info(f"Using file creation date as nothing better was detected {filename}")
-    return folder
+    return date
