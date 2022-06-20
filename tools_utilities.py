@@ -70,7 +70,7 @@ def get_creation_date(path_to_file: str | pathlib.Path) -> str:
         # so we'll settle for when its content was last modified.
         return stat.st_mtime
 
-def walk(path): 
+def walk(path: str | pathlib.Path): 
     for p in pathlib.Path(path).iterdir(): 
         if p.is_dir(): 
             yield from walk(p)
