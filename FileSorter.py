@@ -6,6 +6,7 @@ from tools_metadata import get_date_from_image_filename
 import shutil
 import logging
 from typing import overload
+from exceptions import CannotMoveFileError
 
 class FileSorter(abc.ABC):
 
@@ -17,34 +18,32 @@ class FileSorter(abc.ABC):
         ...
 
     @overload
-    def sort(self, filepath: pathlib.Path, destination: pathlib.Path, method: str="copy"):
+    def sort(self, filepath: pathlib.Path, destination: pathlib.Path, method: str = "copy") -> None:
         ...
 
-    def sort(self, filepath: str, destination: str, method: str="copy"):
+    def sort(self, filepath: str, destination: str, method: str = "copy") -> None:
 
         if ~isinstance(filepath, pathlib.Path):
             filepath = pathlib.Path(filepath)
         if ~isinstance(destination, pathlib.Path):
             destination = pathlib.Path(destination)
 
-        destination_full = destination / self.path(filepath) / filepath.name
+        destination_full = destination / self.path(filepath)
     
         try:
             self.make_dir(destination_full)
 
             if method == "move":
-                relocate_method = self.move()
+                relocate_method = self.move
                 
             elif method == "copy":
-                relocate_method = self.copy()
+                relocate_method = self.copy
 
             relocate_method(filepath, destination_full)
 
-        except shutil.Error:
-
-            logging.info(f"{filepath.name}: Cannot move file, attempting to copy instead")
-            shutil.copy(filepath, destination_full)
-            logging.info(f"{filepath.name} copied to {destination_full.parents[0]}")
+        except shutil.Error as e:
+            logging.error(f"{filepath.name}: Cannot move file")
+            raise CannotMoveFileError from e
 
     
     def make_dir(self, path:pathlib.Path) -> None:
@@ -62,14 +61,17 @@ class FileSorter(abc.ABC):
 
 class ImageByDateSorter(FileSorter):
 
-    def path(self, filename: str) -> str:
-        return get_date_from_image_filename(filename, "%Y-%m")
+    def path(self, filepath:pathlib.Path) -> str:
+        return get_date_from_image_filename(filepath.name, "%Y-%m")
 
 
 class ImageByLocationSorter(FileSorter):
 
     def path(self, filename: str) -> str:
         return 0
+
+        # with geo.GoogleMapsClient() as client:
+        # locations = client.aggregate_reverse_geocode(queue)
 
 
 def main():

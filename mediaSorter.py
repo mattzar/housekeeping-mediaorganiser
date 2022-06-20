@@ -1,43 +1,43 @@
 from __future__ import annotations
 import os
 import pathlib
-import shutil
-import re
 import logging
 import sys
 from LogFormatter import setup_logging
 import argparse
 import yaml
+from ImageQueue import ImageQueue
 
-import tools_utilities as util
-import tools_metadata as meta
-import media_geocoder as geo
 from FileSorter import ImageByDateSorter, ImageByLocationSorter
 from FileSearch import DirectorySearch, RemovableDriveSearch
 
+from exceptions import CannotMoveFileError
 
 class MediaSorter:
-    def __init__(self, params=None):
+    def __init__(self, params: argparse.Namespace = None):
 
         settings_path = pathlib.Path(os.getcwd(), "settings.yaml")
         with open(settings_path, "r") as file:
             settings = yaml.safe_load(file)
 
-        defaults = settings["defaults"] | settings["jobs"][params.job] if params.job else settings["defaults"]
-        self.input = pathlib.Path(params.input or defaults["input"])
-        self.output = pathlib.Path(params.output or defaults["output"])
-        self.log = pathlib.Path(
-            params.log or settings["defaults"]["output"] + defaults["log"]
-        )
-        self.loglevel = params.loglevel or defaults["loglevel"]
-        self.extensions = params.include or tuple(defaults["extensions"])
-        self.foldernames = params.foldernames or defaults["foldernames"]
-        self.method = params.method or defaults["method"]
-
         try:
-            self.exclusions = params.exclude.split(" ")
+            params_default = settings["defaults"] | settings["jobs"][params.job]
+        except KeyError:
+            params_default = settings["defaults"]
+
+        params = params_default | {k: v for k, v in vars(params).items() if v is not None}
+
+        self.input = pathlib.Path(params["input"])
+        self.output = pathlib.Path(params["output"])
+        self.log = pathlib.Path(params["output"], params["log"])
+        self.loglevel = params["loglevel"]
+        self.extensions = params["extensions"]
+        self.foldernames = params["foldernames"]
+        self.method = params["method"]
+        try:
+            self.exclusions = params["exclusions"].split(" ")
         except AttributeError:
-            self.exclusions = defaults["exclusions"]
+            self.exclusions = params["exclusions"] if isinstance(params["exclusions"], list) else (params["exclusions"],)
 
         pathlib.Path(self.output).mkdir(parents=True, exist_ok=True)
 
@@ -54,65 +54,67 @@ class MediaSorter:
             print("Failed to setup logging, aborting.")
             exit()
 
-    def process_job(self):
+    def process_job(self) -> None:
 
         logging.info("Starting job")
 
-
         # if input is set to removable drives, look for files of type self.extensions
-        # otherwise look for files in the defined input directory
         if self.input.name == "removables":
-            input_files = RemovableDriveSearch().find_files(
-                extensions=self.extensions,
-            ).exclude_files(self.exclusions)
+            input_files = RemovableDriveSearch() \
+                .find_files(extensions=self.extensions) \
+                .exclude_files(self.exclusions)
+            logging.info(f"{len(input_files)} files found in on removable drives")
+        # otherwise look for files in the defined input directory
         else:
-            input_files = DirectorySearch().find_files(
-                extensions=self.extensions, 
-                directory=self.input
-            ).exclude_files(self.exclusions)
+            input_files = DirectorySearch() \
+                .find_files(extensions=self.extensions, directory=self.input) \
+                .exclude_files(self.exclusions)
+            logging.info(f"{len(input_files)} files found in input folder: {self.input}")
         
-        existing_files = DirectorySearch().find_files(
-            extensions=self.extensions, 
-            directory=self.output
-        )
-        # Form queue of files of type in 'extensions', which are in input but not already in output (avoids duplicates)
-        queue = [file for file in input_files.filenames if file not in existing_files.filenames]
-
-        logging.info(f"{len(input_files)} files found in input folder: {self.input}")
+        # Find all existing files in output directory with specified extensions
+        existing_files = DirectorySearch() \
+            .find_files(extensions=self.extensions, directory=self.output)
         logging.info(f"{len(existing_files)} files found in output folder: {self.output}")
-        logging.info(f"{len(queue)} files added to job queue")
 
-        if self.foldernames == "location":
-            with geo.GoogleMapsClient() as client:
-                locations = client.aggregate_reverse_geocode(queue)
+        # Form queue of files of type in 'extensions', which are in input but not already in output (avoids copying files already present)
+        q = ImageQueue([file for file in input_files.filepaths if file.name not in existing_files.filenames])
+        logging.info(f"{q.qsize()} files added to job queue")
 
-        while queue:
+        if self.foldernames == "date":
+            sorter = ImageByDateSorter()
+        elif self.foldernames == "location":
+            sorter = ImageByLocationSorter()
 
-            image = queue.pop()
+        while not q.empty():
 
-            if self.foldernames == "date":
-                sorter = ImageByDateSorter()
+            image = q.get()
 
-            elif self.foldernames == "location":
-                # Experimental
-                sorter = ImageByLocationSorter()
-            
-            sorter.sort(
-                filepath=image,
-                destination=self.output,
-                method=self.method
-            )
+            logging.info(f"{str(q)} Sorting {image.name} from folder {image.parents[0]}")
+
+            try:
+                sorter.sort(
+                    filepath=image,
+                    destination=self.output,
+                    method=self.method
+                )
+
+            except CannotMoveFileError:
+                sorter.sort(
+                    filepath=image,
+                    destination=self.output,
+                    method='copy'
+                )
 
         logging.info("Finished job")
 
 
-def arg_handler():
+def arg_handler() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description="A program to sort media")
     parser.add_argument("-i", "--input", help="path to source directory")
     parser.add_argument("-o", "--output", help="path to output directory")
     parser.add_argument("-l", "--log", help="path to log output file")
-    parser.add_argument("-n", "--include", help="filetypes to include in sort")
+    parser.add_argument("-e", "--extensions", help="filetypes to include in sort")
     parser.add_argument("-x", "--exclude", help="wildcarded names to exclude")
     parser.add_argument("-f", "--foldernames", help="wildcarded names to exclude")
     parser.add_argument("-m", "--method", help="select 'copy' or 'move' files")

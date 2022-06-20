@@ -3,8 +3,7 @@ defaults:
     output: I:\Family\Sony RX100 IV\
     extensions: [.jpg, .png, .mp4, .3gp, .MP4]
     exclusions:
-        - "^(?!.*WA).*$" # Exclude files containing 'WA' (whatsapp photos)
-        - "^[^.].*$" # Exclude files starting with '.'
+        - "^[.].*$" # Exclude files starting with '.'
     log: media-worker.log
     foldernames: date # date | location
     method: copy # copy | move
@@ -14,18 +13,29 @@ jobs:
     camera:
         input: removables
         output: I:\Family\Sony RX100 IV\
-        extensions: [JPG, jpg, png, mp4, 3gp, MP4]
-        exclusions: [WA,]
-        log: media-worker.log
+        extensions: [.jpg, .png, .mp4, .3gp, .MP4]
+        exclusions:
+            - "^[.].*$" # Exclude files starting with '.'
         foldernames: date # date | location
         method: copy # copy | move
 
     cellphone:
         input: D:\temp
         output: I:\Matthew\photos\0 Cellphone
-        extensions: [JPG, jpg, png, mp4, 3gp, MP4]
-        exclusions: [WA,]
-        log: media-worker.log
+        extensions: [.jpg, .png, .mp4, .3gp, .MP4]
+        exclusions:
+            - "^(.*WA).*$" # Exclude files containing 'WA' (whatsapp photos)
+            - "^[.].*$" # Exclude files starting with '.'
+        foldernames: date # date | location
+        method: move # copy | move
+
+    testing:
+        input: D:\temp\in
+        output: D:\temp\out
+        extensions: [.jpg, .png, .mp4, .3gp, .MP4]
+        exclusions:
+            - "^(.*WA).*$" # Exclude files containing 'WA' (whatsapp photos)
+            - "^[.].*$" # Exclude files starting with '.'
         foldernames: date # date | location
         method: move # copy | move
 

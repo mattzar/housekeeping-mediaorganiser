@@ -18,7 +18,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args":[
-                "-j", "camera",
+                "-j", "testing",
             ],
         }
     ]

@@ -2,7 +2,7 @@ import os
 import re
 import platform
 from datetime import datetime, timedelta
-from typing import List
+from typing import Any, List
 import psutil
 import logging
 import pathlib
@@ -10,7 +10,7 @@ import pathlib
 class ValidDateNotFound(Exception):
     """A valid date cannot be extracted from the filename"""
 
-def iterable(obj):
+def iterable(obj: Any) -> bool:
     try:
         iter(obj)
     except Exception:
@@ -53,7 +53,7 @@ def get_date_from_string(string : str):
     # otherwise return 0
     raise ValidDateNotFound
 
-def get_creation_date(path_to_file):
+def get_creation_date(path_to_file: str | pathlib.Path) -> str:
     """
     Try to get the date that a file was created, falling back to when it was
     last modified if that isn't possible.

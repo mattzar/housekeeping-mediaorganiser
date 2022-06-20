@@ -14,13 +14,8 @@ class FileSearch(abc.ABC):
     def find_files(self, extensions=None, directory: Optional[str]=None) -> FileSearch:
         ...
 
-    def regex_exclude(self, regex: str, filepaths=None) -> None:
-        if filepaths is None:
-            filepaths = self.filepaths
-        self.filepaths = [i for i in filepaths if not (any(ex.search(i) for ex in re.compile(regex)))]
-
     def exclude_files(self, exclusions: List[str]) -> FileSearch:
-        [self.regex_exclude(exclusion) for exclusion in exclusions]
+        self.filepaths = [i for i in self.filepaths if not (any(re.compile(ex).search(str(i)) for ex in exclusions))]
         return self
 
     @property
