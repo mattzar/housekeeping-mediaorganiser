@@ -35,7 +35,6 @@ class MediaSorter:
         self.method=params["method"]
         self.formats=params["formats"]
         self.subfolder= params["subfolder"]
-        self.min_file_size=params["min_file_size"]
 
         try:
             self.exclusions = params["exclusions"].split(" ")
@@ -106,7 +105,6 @@ class MediaSorter:
                         method=self.method,
                         formats=self.formats,
                         subfolder= self.subfolder,
-                        min_file_size=self.min_file_size
                     )
                 )
 
@@ -118,7 +116,6 @@ class MediaSorter:
                         method="copy",
                         formats=self.formats,
                         subfolder= self.subfolder,
-                        min_file_size=self.min_file_size
                     )
                 )
 

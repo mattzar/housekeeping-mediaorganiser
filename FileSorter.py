@@ -21,7 +21,7 @@ class FileSorter(abc.ABC):
 
         subfolder: dict = options["subfolder"]
         method: str = options["method"] or "copy"
-        min_file_size = options["min_file_size"] * (1024 * 1024) or 0
+        
 
         if not isinstance(filepath, Path):
             filepath = Path(filepath)
@@ -31,6 +31,7 @@ class FileSorter(abc.ABC):
         destination_full = destination / self.path(filepath)
 
         if subfolder["enabled"]:
+            min_file_size = subfolder["min_file_size"] * (1024 * 1024) or 0
             try:
                 metadata = get_metadata_from_exif(filepath)
                 for field, value in subfolder["masked_fields"].items():
