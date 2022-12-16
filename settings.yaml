@@ -15,9 +15,47 @@ defaults:
         output: "%Y-%m"
     subfolder:
         enabled: False
-    min_file_size: 1
 
 jobs:
+    nextcloud-matthew:
+        input:  /mnt/nextcloud/data/matthew/files/Photos/
+        output: /mnt/home/matthew/photos/0 Cellphone/
+        extensions: [JPG, jpg, png, mp4, 3gp, MP4]
+        exclusions: [WA,]
+        log: media-worker.log
+        foldernames: date # date | location
+        method: copy
+        loglevel: info
+        formats:
+            input:
+                regex: \d{8}
+                dateformat: "%Y%m%d"
+            output: "%Y-%m"
+        subfolder:
+            enabled: False
+            min_file_size: 1
+
+    nextcloud-landi:
+        input:  /mnt/nextcloud/data/landi/files/Photos/
+        output: /mnt/home/Landi/photos/
+        extensions: [JPG, jpg, png, mp4, 3gp, MP4]
+        exclusions: [WA,]
+        log: media-worker.log
+        foldernames: date # date | location
+        method: copy
+        formats:
+            input:
+                regex: \d{2}-\d{2}-\d{2}
+                dateformat: "%y-%m-%d"
+            output: "%Y-%m"
+        subfolder:
+            enabled: True
+            subfolder_name: whatsapp
+            sortby: metadata
+            min_file_size: 1
+            masked_fields:
+                Make: Apple
+
     camera:
         input: removables
         output: I:\Family\Sony RX100 IV\
@@ -65,9 +103,9 @@ jobs:
             enabled: True
             subfolder_name: whatsapp
             sortby: metadata
+            min_file_size: 1        
             masked_fields:
                 Make: Apple
-        min_file_size: 1        
 
     test:
         input: D:\temp\in
@@ -87,9 +125,9 @@ jobs:
             enabled: True
             subfolder_name: whatsapp
             sortby: metadata
+            min_file_size: 1
             masked_fields:
                 Make: Apple
-        min_file_size: 1
         
 
 
