@@ -2,21 +2,17 @@ from PIL import Image, UnidentifiedImageError
 from PIL.ExifTags import TAGS
 import logging
 from datetime import datetime
-import os
 from tools_utilities import get_date_from_string, get_creation_date, ValidDateNotFound
+from pathlib import Path
 
-def get_metadata_from_exif(filename : str) -> dict:
+def get_metadata_from_exif(filepath : Path) -> dict:
 
     try:
-        image = Image.open(filename)
+        image = Image.open(filepath)
         image.verify()
     except UnidentifiedImageError:
-        filename = os.path.split(filename)[0]
-        logging.info(f"{filename} was not recoginized as image")
-        return 0
-    except Exception:
-        logging.error("File is broken")
-        return 0
+        logging.info(f"{filepath.name} was not recognized as image")
+        raise
 
     exifdata = image.getexif()
     metadata = {}
@@ -36,25 +32,26 @@ def get_metadata_from_exif(filename : str) -> dict:
 
     return metadata
 
-def get_date_from_image_filename(filename : str, format : str) -> str:
+def get_date_from_image_file(filepath : Path, format:dict = None) -> datetime:
 
     # First look for 8 digits in filename
     try:
-        folder = get_date_from_string(filename).strftime(format)
-        logging.info(f"Valid date extracted from {filename}")
-        return folder
+        date = get_date_from_string(filepath.name, format)
+        logging.info(f"Valid date extracted from {filepath.name}")
+        return date
     except ValidDateNotFound:
-        logging.info(f"Valid date not detected in {filename}")
+        logging.info(f"Valid date not detected in {filepath.name}")
     
     # If that doesnt work, look for metadata from exif
     try:
-        folder = "-".join(get_metadata_from_exif(filename)["DateTime"].split(" ")[0].split(":")[:2])
-        logging.info(f"Using DateTime from metadata in {filename}")
-        return folder
-    except (KeyError, TypeError):
-        logging.info(f"No datetime present in metadata {filename}")
+        date = datetime(*[int(el) for el in get_metadata_from_exif(filepath)["DateTime"].split(" ")[0].split(":")])
+        logging.info(f"Using DateTime from metadata in {filepath.name}")
+        return date
+
+    except (UnidentifiedImageError, KeyError):
+        logging.info(f"No datetime present in {filepath.name} metadata")
 
     # If that doesn't work, then get the time from the file creation date as a last resort
-    folder = datetime.fromtimestamp(get_creation_date(filename)).astimezone().strftime(format)
-    logging.info(f"Using file creation date as nothing better was detected {filename}")
-    return folder
+    date = datetime.fromtimestamp(get_creation_date(filepath)).astimezone()
+    logging.info(f"Using file creation date as nothing better was detected {filepath.name}")
+    return date

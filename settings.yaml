@@ -1,31 +1,97 @@
 defaults:
     input: removables
     output: I:\Family\Sony RX100 IV\
-    extensions: [JPG, jpg, png, mp4, 3gp, MP4]
-    exclusions: [WA,]
+    extensions: [.jpg, .png, .mp4, .3gp, .MP4]
+    exclusions:
+        - "^[.].*$" # Exclude files starting with '.'
     log: media-worker.log
     foldernames: date # date | location
     method: copy # copy | move
     loglevel: info
+    formats:
+        input:
+            regex: \d{8}
+            dateformat: "%Y%m%d"
+        output: "%Y-%m"
+    subfolder:
+        enabled: False
+    min_file_size: 1
 
 jobs:
     camera:
         input: removables
         output: I:\Family\Sony RX100 IV\
-        extensions: [JPG, jpg, png, mp4, 3gp, MP4]
-        exclusions: [WA,]
-        log: media-worker.log
+        extensions: [.jpg, .png, .mp4, .3gp, .MP4]
+        exclusions:
+            - "^[.].*$" # Exclude files starting with '.'
         foldernames: date # date | location
         method: copy # copy | move
 
     cellphone:
-        input: D:\temp
+        input: D:\temp\cellphone_dump
         output: I:\Matthew\photos\0 Cellphone
-        extensions: [JPG, jpg, png, mp4, 3gp, MP4]
-        exclusions: [WA,]
-        log: media-worker.log
+        extensions: [.jpg, .png, .mp4, .3gp, .MP4]
+        exclusions:
+            - "^(.*WA).*$" # Exclude files containing 'WA' (whatsapp photos)
+            - "^[.].*$" # Exclude files starting with '.'
         foldernames: date # date | location
         method: move # copy | move
+
+    testing:
+        input: D:\temp\in
+        output: D:\temp\out
+        extensions: [.jpg, .png, .mp4, .3gp, .MP4]
+        exclusions:
+            - "^(.*WA).*$" # Exclude files containing 'WA' (whatsapp photos)
+            - "^[.].*$" # Exclude files starting with '.'
+        foldernames: date # date | location
+        method: move # copy | move
+
+    landi:
+        input: I:\Landi\photos2
+        output: I:\Landi\photos\
+        extensions: [.jpg, .jpeg, .png, .mp4, .3gp, .MP4, .mov]
+        exclusions:
+            - "^(.*WA).*$" # Exclude files containing 'WA' (whatsapp photos)
+            - "^[.].*$" # Exclude files starting with '.'
+        foldernames: date # date | location
+        method: move # copy | move
+        formats:
+            input:
+                regex: \d{2}-\d{2}-\d{2}
+                dateformat: "%y-%m-%d"
+            output: "%Y-%m"
+        subfolder:
+            enabled: True
+            subfolder_name: whatsapp
+            sortby: metadata
+            masked_fields:
+                Make: Apple
+        min_file_size: 1        
+
+    test:
+        input: D:\temp\in
+        output: D:\temp\out
+        extensions: [.jpg, .jpeg, .png, .mp4, .3gp, .MP4, .mov]
+        exclusions:
+            - "^(.*WA).*$" # Exclude files containing 'WA' (whatsapp photos)
+            - "^[.].*$" # Exclude files starting with '.'
+        foldernames: date # date | location
+        method: move # copy | move
+        formats:
+            input:
+                regex: \d{2}-\d{2}-\d{2}
+                dateformat: "%y-%m-%d"
+            output: "%Y-%m"
+        subfolder:
+            enabled: True
+            subfolder_name: whatsapp
+            sortby: metadata
+            masked_fields:
+                Make: Apple
+        min_file_size: 1
+        
+
 
 location:
     priority: [formatted_address, name]
