@@ -1,6 +1,8 @@
-/venv/*
-/.vscode/*
-/__pycache__/*
-/.mypy_cache/*
-/.swp
+venv/*
+.vscode/*
+__pycache__/*
+.mypy_cache/*
+.swp
 tokens.py
+*.json
+*.code-workspace

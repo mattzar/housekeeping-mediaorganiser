@@ -1,6 +1,5 @@
 from __future__ import annotations
-import os
-import pathlib
+from pathlib import Path
 import logging
 import sys
 from LogFormatter import setup_logging
@@ -8,15 +7,15 @@ import argparse
 import yaml
 from ImageQueue import ImageQueue
 
-from FileSorter import ImageByDateSorter, ImageByLocationSorter
+from FileSorter import FileSorter, ImageByDateSorter, ImageByLocationSorter
 from FileSearch import DirectorySearch, RemovableDriveSearch
 
 from exceptions import CannotMoveFileError
 
 class MediaSorter:
-    def __init__(self, params: argparse.Namespace = None):
+    def __init__(self, params:argparse.ArgumentParser = None):
 
-        settings_path = pathlib.Path(os.getcwd(), "settings.yaml")
+        settings_path = Path(Path().absolute(), "settings.yaml")
         with open(settings_path, "r") as file:
             settings = yaml.safe_load(file)
 
@@ -27,19 +26,23 @@ class MediaSorter:
 
         params = params_default | {k: v for k, v in vars(params).items() if v is not None}
 
-        self.input = pathlib.Path(params["input"])
-        self.output = pathlib.Path(params["output"])
-        self.log = pathlib.Path(params["output"], params["log"])
+        self.input = Path(params["input"])
+        self.output = Path(params["output"])
+        self.log = Path(params["output"], params["log"])
         self.loglevel = params["loglevel"]
         self.extensions = params["extensions"]
         self.foldernames = params["foldernames"]
-        self.method = params["method"]
+        self.method=params["method"]
+        self.formats=params["formats"]
+        self.subfolder= params["subfolder"]
+        self.min_file_size=params["min_file_size"]
+
         try:
             self.exclusions = params["exclusions"].split(" ")
         except AttributeError:
             self.exclusions = params["exclusions"] if isinstance(params["exclusions"], list) else (params["exclusions"],)
 
-        pathlib.Path(self.output).mkdir(parents=True, exist_ok=True)
+        Path(self.output).mkdir(parents=True, exist_ok=True)
 
         # Setup logging
         if not setup_logging(
@@ -80,8 +83,12 @@ class MediaSorter:
         q = ImageQueue([file for file in input_files.filepaths if file.name not in existing_files.filenames])
         logging.info(f"{q.qsize()} files added to job queue")
 
+        sorter: FileSorter # Forward declaration to appease mypy linter
         if self.foldernames == "date":
-            sorter = ImageByDateSorter()
+            sorter = ImageByDateSorter(
+                input_format = self.formats["input"],
+                output_format=self.formats["output"]
+            )
         elif self.foldernames == "location":
             sorter = ImageByLocationSorter()
 
@@ -95,14 +102,24 @@ class MediaSorter:
                 sorter.sort(
                     filepath=image,
                     destination=self.output,
-                    method=self.method
+                    options=dict(
+                        method=self.method,
+                        formats=self.formats,
+                        subfolder= self.subfolder,
+                        min_file_size=self.min_file_size
+                    )
                 )
 
             except CannotMoveFileError:
                 sorter.sort(
                     filepath=image,
                     destination=self.output,
-                    method='copy'
+                    options=dict(
+                        method="copy",
+                        formats=self.formats,
+                        subfolder= self.subfolder,
+                        min_file_size=self.min_file_size
+                    )
                 )
 
         logging.info("Finished job")

@@ -1,6 +1,4 @@
-
-
-
+from __future__ import annotations
 from GPSPhoto import gpsphoto
 import googlemaps
 import logging

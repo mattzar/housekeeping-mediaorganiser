@@ -14,7 +14,8 @@ class ImageQueue(Queue):
             self.qsize_initial = 0
 
     def initialize(self, items: List) -> ImageQueue:
-        [self.put(item) for item in items]
+        for item in items:
+            self.put(item)
         self.qsize_initial = self.qsize()
         return self
     
