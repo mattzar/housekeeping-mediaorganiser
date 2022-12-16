@@ -18,7 +18,7 @@ defaults:
 
 jobs:
     nextcloud-matthew:
-        input:  /mnt/nextcloud/data/matthew/files/Photos/
+        input: /mnt/nextcloud/data/matthew/files/Photos/
         output: /mnt/home/matthew/photos/0 Cellphone/
         extensions: [JPG, jpg, png, mp4, 3gp, MP4]
         exclusions: [WA,]
