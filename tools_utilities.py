@@ -115,7 +115,7 @@ def rename_files_with_suffix(folder_path, suffix='2'):
 
 def main():
     # Provide the path to the folder containing the files
-    folder_path = 'I:\Landi\photos_temp'
+    folder_path = 'path/to/folder'
 
     # Call the function to rename files in the folder
     rename_files_with_suffix(folder_path)
