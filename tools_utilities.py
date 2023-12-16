@@ -94,8 +94,31 @@ def get_creation_date(path_to_file: str | pathlib.Path) -> Any:
 def list_filepaths_in_dir(directory : str | pathlib.Path, ext : List[str]) -> List[pathlib.Path]:
     return [filepath for filepath in pathlib.Path(directory).rglob("**/*") if filepath.suffix.casefold() in map(str.casefold, ext)]
 
+def rename_files_with_suffix(folder_path, suffix='2'):
+    # List all files in the folder
+    files = os.listdir(folder_path)
+
+    for filename in files:
+        # Construct the old and new file paths
+        old_path = os.path.join(folder_path, filename)
+        new_filename = f"{os.path.splitext(filename)[0]}_{suffix}{os.path.splitext(filename)[1]}"
+        new_path = os.path.join(folder_path, new_filename)
+
+        # Check if the new filename already exists
+        if not os.path.exists(new_path):
+            # Rename the file
+            os.rename(old_path, new_path)
+            print(f'Renamed: {filename} to {new_filename}')
+        else:
+            print(f'Skipped renaming {filename} as {new_filename} already exists.')
+
+
 def main():
-    pass
+    # Provide the path to the folder containing the files
+    folder_path = 'I:\Landi\photos_temp'
+
+    # Call the function to rename files in the folder
+    rename_files_with_suffix(folder_path)
 
 if __name__ == "__main__":
     main()
