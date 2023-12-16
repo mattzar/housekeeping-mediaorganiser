@@ -1,0 +1,17 @@
+defaults:
+    input: removables
+    output: I:\Family\Sony RX100 IV\
+    extensions: [.jpg, .png, .mp4, .3gp, .MP4]
+    exclusions:
+        - "^[.].*$" # Exclude files starting with '.'
+    log: media-worker.log
+    foldernames: date # date | location
+    method: copy # copy | move
+    loglevel: info
+    formats:
+        input:
+            regex: \d{8}
+            dateformat: "%Y%m%d"
+        output: "%Y-%m"
+    subfolder:
+        enabled: False
