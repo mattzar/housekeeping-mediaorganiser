@@ -15,11 +15,11 @@
             "name": "Python: Job",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "MediaSorter.py",
             "console": "integratedTerminal",
             "args":[
-                "-j", "camera",
+                "-j", "landi",
             ],
-        }
+        },
     ]
 }
