@@ -11,6 +11,7 @@ from FileSorter import FileSorter, ImageByDateSorter, ImageByLocationSorter
 from FileSearch import DirectorySearch, RemovableDriveSearch
 
 from exceptions import CannotMoveFileError
+from tools_utilities import compute_checksum
 
 class MediaSorter:
     def __init__(self, params:argparse.ArgumentParser = None):
@@ -63,23 +64,38 @@ class MediaSorter:
         # if input is set to removable drives, look for files of type self.extensions
         if self.input.name == "removables":
             input_files = RemovableDriveSearch() \
-                .find_files(extensions=self.extensions) \
-                .exclude_files(self.exclusions)
+                    .find_files(extensions=self.extensions) \
+                    .exclude_files(self.exclusions)
             logging.info(f"{len(input_files)} files found in on removable drives")
         # otherwise look for files in the defined input directory
         else:
             input_files = DirectorySearch() \
-                .find_files(extensions=self.extensions, directory=self.input) \
-                .exclude_files(self.exclusions)
+                    .find_files(extensions=self.extensions, directory=self.input) \
+                    .exclude_files(self.exclusions)
             logging.info(f"{len(input_files)} files found in input folder: {self.input}")
-        
+
         # Find all existing files in output directory with specified extensions
         existing_files = DirectorySearch() \
-            .find_files(extensions=self.extensions, directory=self.output)
+                .find_files(extensions=self.extensions, directory=self.output)
         logging.info(f"{len(existing_files)} files found in output folder: {self.output}")
 
-        # Form queue of files of type in 'extensions', which are in input but not already in output (avoids copying files already present)
-        q = ImageQueue([file for file in input_files.filepaths if file.name not in existing_files.filenames])
+        # Form queue of files of type in 'extensions'. Included specified files according to the following criteria:
+        #  - Which are in input but not already in output (avoids copying files already present)
+        #  - Which are in input but already in output and have different sizes
+        #  - Which are in input but already in output and have the same size but different content
+        input_files_filtered = []
+        for file in input_files.filepaths:
+            if file.name not in existing_files.filenames:
+                input_files_filtered.append(file)
+            else:
+                existing_filepath = existing_files[file.name]
+                if file.stat().st_size != existing_filepath.stat().st_size:
+                    logging.debug(f"File {file.name} is already in output folder but has a different size. Adding to queue")
+                    input_files_filtered.append(file)
+                elif compute_checksum(file) != compute_checksum(existing_filepath):
+                    logging.debug(f"File {file.name} is already in output folder, has the same size as input, but has varying content. Adding to queue")
+                    input_files_filtered.append(file)
+        q = ImageQueue(input_files_filtered)
         logging.info(f"{q.qsize()} files added to job queue")
 
         sorter: FileSorter # Forward declaration to appease mypy linter

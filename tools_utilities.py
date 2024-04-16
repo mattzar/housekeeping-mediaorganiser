@@ -7,6 +7,7 @@ import psutil
 import logging
 import pathlib
 import time
+import hashlib
 
 class ValidDateNotFound(Exception):
     """A valid date cannot be extracted from the filename"""
@@ -112,6 +113,14 @@ def rename_files_with_suffix(folder_path, suffix='2'):
         else:
             print(f'Skipped renaming {filename} as {new_filename} already exists.')
 
+
+def compute_checksum(file_path: str, algorithm='md5') -> str:
+    """Compute checksum of a file."""
+    hash_algorithm = hashlib.md5() if algorithm == 'md5' else hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            hash_algorithm.update(chunk)
+    return hash_algorithm.hexdigest()
 
 def main():
     # Provide the path to the folder containing the files

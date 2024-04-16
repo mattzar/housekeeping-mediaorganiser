@@ -16,6 +16,12 @@ class FileSearch:
     @property
     def filenames(self) -> List[str]:
         return [filepath.name for filepath in self.filepaths]
+    
+    def __getitem__(self, filename: int) -> Path:
+        if filename in self.filenames:
+            return self.filepaths[self.filenames.index(filename)]
+        else:
+            raise KeyError(f"Filename {filename} not found in filepaths")
 
     def __len__(self) -> int:
         return len(self.filepaths)
